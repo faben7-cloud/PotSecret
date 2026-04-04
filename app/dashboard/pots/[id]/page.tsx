@@ -1,4 +1,6 @@
-﻿import { createSupabaseServerClient } from "@/lib/supabase/server";
+﻿import Link from "next/link";
+import { notFound } from "next/navigation";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 type PageProps = {
   params: {
@@ -7,185 +9,185 @@ type PageProps = {
 };
 
 export default async function PotDetailPage({ params }: PageProps) {
-  try {
-    const potId = params.id;
+  const potId = params.id;
+  const supabase = await createSupabaseServerClient();
 
-    if (!potId) {
-      return (
-        <div style={{ padding: 40 }}>
-          <h1>Erreur</h1>
-          <p>ID du pot manquant.</p>
-        </div>
-      );
-    }
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
 
-    const supabase = await createSupabaseServerClient();
+  if (!user) {
+    notFound();
+  }
 
-    const {
-      data: { user },
-      error: userError
-    } = await supabase.auth.getUser();
+  const { data: pot, error: potError } = await supabase
+    .from("pots")
+    .select("*")
+    .eq("id", potId)
+    .eq("owner_user_id", user.id)
+    .maybeSingle();
 
-    if (userError) {
-      return (
-        <div style={{ padding: 40 }}>
-          <h1>Erreur utilisateur</h1>
-          <pre>{JSON.stringify(userError, null, 2)}</pre>
-        </div>
-      );
-    }
+  if (potError) {
+    throw new Error(potError.message);
+  }
 
-    if (!user) {
-      return (
-        <div style={{ padding: 40 }}>
-          <h1>Non connecté</h1>
-          <p>Aucun utilisateur connecté.</p>
-        </div>
-      );
-    }
+  if (!pot) {
+    notFound();
+  }
 
-    const { data: pot, error: potError } = await supabase
-      .from("pots")
-      .select("*")
-      .eq("id", potId)
-      .eq("owner_user_id", user.id)
-      .maybeSingle();
+  const { data: contributions, error: contributionsError } = await supabase
+    .from("contributions")
+    .select("*")
+    .eq("pot_id", potId)
+    .order("created_at", { ascending: false });
 
-    if (potError) {
-      return (
-        <div style={{ padding: 40 }}>
-          <h1>Erreur lecture pot</h1>
-          <pre>{JSON.stringify(potError, null, 2)}</pre>
-        </div>
-      );
-    }
+  if (contributionsError) {
+    throw new Error(contributionsError.message);
+  }
 
-    if (!pot) {
-      return (
-        <div style={{ padding: 40 }}>
-          <h1>Pot introuvable</h1>
-          <p>
-            Aucun pot trouvé pour cet identifiant, ou ce pot n’appartient pas à
-            l’utilisateur connecté.
-          </p>
-          <p>
-            <strong>potId :</strong> {potId}
-          </p>
-          <p>
-            <strong>userId :</strong> {user.id}
-          </p>
-        </div>
-      );
-    }
+  const safeContributions = contributions ?? [];
 
-    const { data: contributions, error: contributionsError } = await supabase
-      .from("contributions")
-      .select("*")
-      .eq("pot_id", potId)
-      .order("created_at", { ascending: false });
+  const total = safeContributions.reduce(
+    (sum, contribution) => sum + (contribution.amount ?? 0),
+    0
+  );
 
-    if (contributionsError) {
-      return (
-        <div style={{ padding: 40 }}>
-          <h1>Erreur lecture contributions</h1>
-          <pre>{JSON.stringify(contributionsError, null, 2)}</pre>
-        </div>
-      );
-    }
+  const contributionCount = safeContributions.length;
+  const average =
+    contributionCount > 0 ? Math.round(total / contributionCount) : 0;
 
-    const safeContributions = contributions ?? [];
-    const total = safeContributions.reduce(
-      (sum, contribution) => sum + (contribution.amount ?? 0),
-      0
-    );
-
-    const formattedTotal = new Intl.NumberFormat("fr-FR", {
+  const formatAmount = (amountInCents: number) =>
+    new Intl.NumberFormat("fr-FR", {
       style: "currency",
       currency: pot.currency ?? "EUR"
-    }).format(total / 100);
+    }).format(amountInCents / 100);
 
-    return (
-      <div style={{ padding: 40, fontFamily: "Arial, sans-serif" }}>
-        <h1 style={{ fontSize: 32, marginBottom: 10 }}>{pot.title}</h1>
+  const publicUrl = `${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}/p/${pot.share_token}`;
 
-        <p style={{ color: "#666", marginBottom: 20 }}>
-          {pot.description || "Aucune description"}
-        </p>
-
-        <div
-          style={{
-            border: "1px solid #ddd",
-            borderRadius: 12,
-            padding: 20,
-            marginBottom: 24
-          }}
-        >
-          <p>
-            <strong>Total collecté :</strong> {formattedTotal}
+  return (
+    <div className="mx-auto flex w-full max-w-5xl flex-col gap-8 py-8">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="space-y-1">
+          <p className="text-sm font-medium tracking-[0.16em] text-coral">
+            Dashboard
           </p>
-          <p>
-            <strong>Nombre de contributions :</strong> {safeContributions.length}
-          </p>
-          <p>
-            <strong>Devise :</strong> {pot.currency}
-          </p>
-          <p>
-            <strong>Statut :</strong> {pot.status}
-          </p>
-          <p>
-            <strong>Share token :</strong> {pot.share_token}
+          <h1 className="text-3xl font-semibold text-ink">{pot.title}</h1>
+          <p className="text-sm text-ink/70">
+            {pot.description || "Aucune description"}
           </p>
         </div>
 
-        <h2 style={{ fontSize: 24, marginBottom: 12 }}>Contributions</h2>
+        <div className="flex flex-wrap gap-3">
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center justify-center rounded-full border border-ink/10 bg-white px-5 py-3 text-sm font-semibold text-ink hover:border-ink/20"
+          >
+            Retour dashboard
+          </Link>
+
+          <a
+            href={publicUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center justify-center rounded-full bg-coral px-5 py-3 text-sm font-semibold text-white hover:bg-coral/90"
+          >
+            Ouvrir la page publique
+          </a>
+        </div>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-3">
+        <div className="rounded-[1.5rem] border border-ink/10 bg-white p-5 shadow-sm">
+          <p className="text-sm text-ink/60">Total collecté</p>
+          <p className="mt-2 text-2xl font-semibold text-ink">
+            {formatAmount(total)}
+          </p>
+        </div>
+
+        <div className="rounded-[1.5rem] border border-ink/10 bg-white p-5 shadow-sm">
+          <p className="text-sm text-ink/60">Contributions</p>
+          <p className="mt-2 text-2xl font-semibold text-ink">
+            {contributionCount}
+          </p>
+        </div>
+
+        <div className="rounded-[1.5rem] border border-ink/10 bg-white p-5 shadow-sm">
+          <p className="text-sm text-ink/60">Panier moyen</p>
+          <p className="mt-2 text-2xl font-semibold text-ink">
+            {formatAmount(average)}
+          </p>
+        </div>
+      </div>
+
+      <div className="rounded-[1.5rem] border border-ink/10 bg-white p-5 shadow-sm">
+        <p className="text-sm font-medium text-ink/70">Lien public</p>
+
+        <div className="mt-3 flex flex-col gap-3 sm:flex-row">
+          <input
+            readOnly
+            value={publicUrl}
+            className="w-full rounded-lg border border-ink/10 bg-mist px-3 py-2 text-sm text-ink"
+          />
+          <a
+            href={publicUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center justify-center rounded-full border border-ink/10 bg-white px-4 py-2 text-sm font-semibold text-ink hover:border-ink/20"
+          >
+            Tester
+          </a>
+        </div>
+      </div>
+
+      <div className="rounded-[1.5rem] border border-ink/10 bg-white p-5 shadow-sm">
+        <h2 className="text-xl font-semibold text-ink">Contributions</h2>
 
         {safeContributions.length === 0 ? (
-          <p>Aucune contribution pour le moment.</p>
+          <p className="mt-4 text-sm text-ink/60">
+            Aucune contribution pour le moment.
+          </p>
         ) : (
-          <div style={{ display: "grid", gap: 12 }}>
-            {safeContributions.map((contribution) => (
-              <div
-                key={contribution.id}
-                style={{
-                  border: "1px solid #ddd",
-                  borderRadius: 12,
-                  padding: 16
-                }}
-              >
-                <p>
-                  <strong>Participant :</strong>{" "}
-                  {contribution.is_anonymous
-                    ? "Anonyme"
-                    : contribution.contributor_display_name || "Participant"}
-                </p>
-                <p>
-                  <strong>Montant :</strong>{" "}
-                  {new Intl.NumberFormat("fr-FR", {
-                    style: "currency",
-                    currency: pot.currency ?? "EUR"
-                  }).format((contribution.amount ?? 0) / 100)}
-                </p>
-                <p>
-                  <strong>Statut :</strong> {contribution.status}
-                </p>
-                <p>
-                  <strong>Message :</strong>{" "}
-                  {contribution.message_body || "Aucun message"}
-                </p>
-              </div>
-            ))}
+          <div className="mt-4 overflow-x-auto">
+            <table className="min-w-full border-separate border-spacing-y-3">
+              <thead>
+                <tr className="text-left text-sm text-ink/50">
+                  <th className="pr-4">Participant</th>
+                  <th className="pr-4">Montant</th>
+                  <th className="pr-4">Statut</th>
+                  <th className="pr-4">Message</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {safeContributions.map((contribution) => (
+                  <tr
+                    key={contribution.id}
+                    className="rounded-xl bg-mist text-sm text-ink"
+                  >
+                    <td className="rounded-l-xl px-4 py-3">
+                      {contribution.is_anonymous
+                        ? "Anonyme"
+                        : contribution.contributor_display_name || "Participant"}
+                    </td>
+                    <td className="px-4 py-3">
+                      {formatAmount(contribution.amount ?? 0)}
+                    </td>
+                    <td className="px-4 py-3">{contribution.status}</td>
+                    <td className="px-4 py-3">
+                      {contribution.message_body || "—"}
+                    </td>
+                    <td className="rounded-r-xl px-4 py-3">
+                      {contribution.created_at
+                        ? new Date(contribution.created_at).toLocaleString("fr-FR")
+                        : "—"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
-    );
-  } catch (error) {
-    return (
-      <div style={{ padding: 40, fontFamily: "Arial, sans-serif" }}>
-        <h1>Erreur fatale page pot</h1>
-        <pre style={{ whiteSpace: "pre-wrap" }}>
-          {error instanceof Error ? error.stack || error.message : JSON.stringify(error, null, 2)}
-        </pre>
-      </div>
-    );
-  }
+    </div>
+  );
 }
