@@ -125,15 +125,18 @@ export async function createDashboardPotAction(
   const supabase = await createSupabaseServerClient();
 
   const {
-    data: { user }
+    data: { user },
+    error: userError
   } = await supabase.auth.getUser();
 
-  if (!user) {
+  if (userError || !user) {
     return {
       error: "Session expirée, reconnecte-toi"
     };
   }
 
+  // Version robuste : on n’insère que les colonnes cœur du schéma
+  // pour éviter qu’un champ optionnel absent en base bloque tout.
   const payload = {
     owner_user_id: user.id,
     title: parsed.data.title.trim(),
@@ -143,8 +146,6 @@ export async function createDashboardPotAction(
     currency: parsed.data.currency,
     goal_amount: parsed.data.goal_amount,
     privacy_mode: parsed.data.privacy_mode,
-    beneficiary_name: parsed.data.beneficiary_name?.trim() || null,
-    beneficiary_iban: parsed.data.beneficiary_iban?.trim() || null,
     status: "open",
     share_token: generateShareToken()
   };
@@ -157,8 +158,9 @@ export async function createDashboardPotAction(
 
   if (error || !data) {
     console.error("createDashboardPotAction error:", error);
+
     return {
-      error: "Erreur création pot"
+      error: error?.message || "Erreur création pot"
     };
   }
 
