@@ -54,19 +54,7 @@ const createPotSchema = z.object({
       "L’objectif doit être positif"
     ),
 
-  privacy_mode: z.enum(["total_only", "standard", "blind_to_owner"]),
-
-  beneficiary_name: z
-    .string()
-    .trim()
-    .max(120, "Nom bénéficiaire trop long")
-    .optional(),
-
-  beneficiary_iban: z
-    .string()
-    .trim()
-    .max(64, "IBAN trop long")
-    .optional()
+  privacy_mode: z.enum(["total_only", "standard", "blind_to_owner"])
 });
 
 function generateShareToken() {
@@ -94,9 +82,7 @@ export async function createDashboardPotAction(
     event_date: getStringValue(formData.get("event_date")),
     currency: rawCurrency ?? "EUR",
     goal_amount: getStringValue(formData.get("goal_amount")),
-    privacy_mode: rawPrivacyMode ?? "total_only",
-    beneficiary_name: getStringValue(formData.get("beneficiary_name")),
-    beneficiary_iban: getStringValue(formData.get("beneficiary_iban"))
+    privacy_mode: rawPrivacyMode ?? "total_only"
   });
 
   if (!parsed.success) {
@@ -108,9 +94,7 @@ export async function createDashboardPotAction(
         field === "title" ||
         field === "description" ||
         field === "event_date" ||
-        field === "goal_amount" ||
-        field === "beneficiary_name" ||
-        field === "beneficiary_iban"
+        field === "goal_amount"
       ) {
         fieldErrors[field] = issue.message;
       }
@@ -131,12 +115,10 @@ export async function createDashboardPotAction(
 
   if (userError || !user) {
     return {
-      error: "Session expirée, reconnecte-toi"
+      error: `Session expirée: ${userError?.message ?? "utilisateur absent"}`
     };
   }
 
-  // Version robuste : on n’insère que les colonnes cœur du schéma
-  // pour éviter qu’un champ optionnel absent en base bloque tout.
   const payload = {
     owner_user_id: user.id,
     title: parsed.data.title.trim(),
@@ -150,6 +132,8 @@ export async function createDashboardPotAction(
     share_token: generateShareToken()
   };
 
+  console.log("CREATE POT PAYLOAD:", payload);
+
   const { data, error } = await supabase
     .from("pots")
     .insert(payload)
@@ -160,7 +144,15 @@ export async function createDashboardPotAction(
     console.error("createDashboardPotAction error:", error);
 
     return {
-      error: error?.message || "Erreur création pot"
+      error: [
+        "Erreur création pot",
+        error?.message ? `message=${error.message}` : null,
+        error?.details ? `details=${error.details}` : null,
+        error?.hint ? `hint=${error.hint}` : null,
+        error?.code ? `code=${error.code}` : null
+      ]
+        .filter(Boolean)
+        .join(" | ")
     };
   }
 
