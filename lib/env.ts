@@ -26,6 +26,10 @@ export function getBaseUrl(): string {
   return "http://localhost:3000";
 }
 
+export function getMetadataBase(): URL {
+  return new URL(getBaseUrl());
+}
+
 export function getSupabaseUrl(): string {
   return requireEnv(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
