@@ -1,6 +1,9 @@
 import "server-only";
 
-function requireEnv(value: string | undefined, name: string): string {
+export function getRequiredEnv(
+  value: string | undefined,
+  name: string
+): string {
   const trimmed = value?.trim();
 
   if (!trimmed) {
@@ -31,41 +34,50 @@ export function getMetadataBase(): URL {
 }
 
 export function getSupabaseUrl(): string {
-  return requireEnv(
+  return getRequiredEnv(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     "NEXT_PUBLIC_SUPABASE_URL"
   );
 }
 
 export function getSupabaseAnonKey(): string {
-  return requireEnv(
+  return getRequiredEnv(
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     "NEXT_PUBLIC_SUPABASE_ANON_KEY"
   );
 }
 
 export function getSupabaseServiceRoleKey(): string {
-  return requireEnv(
+  return getRequiredEnv(
     process.env.SUPABASE_SERVICE_ROLE_KEY,
     "SUPABASE_SERVICE_ROLE_KEY"
   );
 }
 
 export function getStripeSecretKey(): string {
-  return requireEnv(process.env.STRIPE_SECRET_KEY, "STRIPE_SECRET_KEY");
+  return getRequiredEnv(
+    process.env.STRIPE_SECRET_KEY,
+    "STRIPE_SECRET_KEY"
+  );
 }
 
 export function getStripeWebhookSecret(): string {
-  return requireEnv(
+  return getRequiredEnv(
     process.env.STRIPE_WEBHOOK_SECRET,
     "STRIPE_WEBHOOK_SECRET"
   );
 }
 
 export function getResendApiKey(): string {
-  return requireEnv(process.env.RESEND_API_KEY, "RESEND_API_KEY");
+  return getRequiredEnv(
+    process.env.RESEND_API_KEY,
+    "RESEND_API_KEY"
+  );
 }
 
 export function getEmailFrom(): string {
-  return requireEnv(process.env.EMAIL_FROM, "EMAIL_FROM");
+  return getRequiredEnv(
+    process.env.EMAIL_FROM,
+    "EMAIL_FROM"
+  );
 }
