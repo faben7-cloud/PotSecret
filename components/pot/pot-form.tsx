@@ -6,11 +6,13 @@ type PotFormState = {
   error?: string;
 };
 
+type PotFormAction = (
+  state: PotFormState,
+  formData: FormData
+) => Promise<PotFormState | void>;
+
 type PotFormProps = {
-  action: (
-    state: PotFormState,
-    formData: FormData
-  ) => Promise<PotFormState | void>;
+  action: PotFormAction;
   submitLabel: string;
   pendingLabel: string;
 };
@@ -40,8 +42,13 @@ export function PotForm({
   submitLabel,
   pendingLabel
 }: PotFormProps) {
+  const typedAction = action as unknown as (
+    state: PotFormState,
+    payload: FormData
+  ) => PotFormState | Promise<PotFormState>;
+
   const [state, formAction] = useFormState<PotFormState, FormData>(
-    action,
+    typedAction,
     {}
   );
 
