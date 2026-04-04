@@ -1,34 +1,48 @@
-import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { createServerClient } from "@supabase/ssr";
 import { getRequiredEnv } from "@/lib/env";
 
 export async function createSupabaseServerClient() {
-  const cookieStore = await cookies();
+  const cookieStore = cookies();
 
   return createServerClient(
-    getRequiredEnv("NEXT_PUBLIC_SUPABASE_URL"),
-    getRequiredEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY"),
+    getRequiredEnv(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      "NEXT_PUBLIC_SUPABASE_URL"
+    ),
+    getRequiredEnv(
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      "NEXT_PUBLIC_SUPABASE_ANON_KEY"
+    ),
     {
       cookies: {
         get(name: string) {
           return cookieStore.get(name)?.value;
         },
-        set(name: string, value: string, options: CookieOptions) {
+        set(name: string, value: string, options: Record<string, unknown>) {
           try {
-            cookieStore.set({ name, value, ...options });
+            cookieStore.set({
+              name,
+              value,
+              ...(options ?? {})
+            });
           } catch {
-            return;
+            // Ignore dans les contextes où set n'est pas autorisé
           }
         },
-        remove(name: string, options: CookieOptions) {
+        remove(name: string, options: Record<string, unknown>) {
           try {
-            cookieStore.set({ name, value: "", ...options, maxAge: 0 });
+            cookieStore.set({
+              name,
+              value: "",
+              ...(options ?? {}),
+              maxAge: 0
+            });
           } catch {
-            return;
+            // Ignore dans les contextes où remove n'est pas autorisé
           }
         }
       }
     }
   );
 }
-
