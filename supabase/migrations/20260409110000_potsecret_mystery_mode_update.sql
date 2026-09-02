@@ -126,7 +126,11 @@ as $$
   group by p.id;
 $$;
 
-create or replace view public.contribution_reveal_view
+-- PostgreSQL cannot alter existing view columns through CREATE OR REPLACE.
+-- Recreate the prior reveal projection before adding message-backed fields.
+drop view if exists public.contribution_reveal_view;
+
+create view public.contribution_reveal_view
 with (security_invoker = true)
 as
 select

@@ -13,7 +13,11 @@ where exists (
     and coalesce(c.revealed, false) = true
 );
 
-create or replace view public.contribution_reveal_view
+-- PostgreSQL cannot rename an existing view column through CREATE OR REPLACE.
+-- This migration replaces the prior per-contribution reveal projection atomically.
+drop view if exists public.contribution_reveal_view;
+
+create view public.contribution_reveal_view
 with (security_invoker = true)
 as
 select
