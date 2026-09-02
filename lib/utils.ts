@@ -16,6 +16,30 @@ export function formatCurrency(amountInMinorUnits: number, currency: string) {
   }).format(amountInMinorUnits / 100);
 }
 
+export function parseEuroAmountToMinorUnits(value: string | null | undefined) {
+  const normalized = value?.trim().replace(/\s|€/g, "").replace(",", ".") ?? "";
+
+  if (!normalized) {
+    return null;
+  }
+
+  if (!/^\d+(?:\.\d{1,2})?$/.test(normalized)) {
+    return Number.NaN;
+  }
+
+  return Math.round(Number.parseFloat(normalized) * 100);
+}
+
+export function formatMinorUnitsForInput(amountInMinorUnits: number | null | undefined) {
+  if (typeof amountInMinorUnits !== "number" || amountInMinorUnits <= 0) {
+    return "";
+  }
+
+  const amountInEuros = amountInMinorUnits / 100;
+
+  return Number.isInteger(amountInEuros) ? String(amountInEuros) : amountInEuros.toFixed(2);
+}
+
 export const privacyModeLabel: Record<PotPrivacyMode, string> = {
   total_only: "Seul le total validé est visible, sans détail individuel.",
   standard: "Les participants ne voient pas les montants individuels, l'organisateur oui.",

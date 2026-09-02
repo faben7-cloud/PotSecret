@@ -4,7 +4,11 @@ alter table public.pots
 comment on column public.pots.messages_visible_to_beneficiary is
   'When true, the organizer may later expose collected messages to the final beneficiary.';
 
-create or replace function public.get_my_pot_detail(p_pot_id uuid)
+-- PostgreSQL cannot replace a function when its OUT columns change.
+-- This pending migration runs transactionally, so callers never observe a partial definition.
+drop function if exists public.get_my_pot_detail(uuid);
+
+create function public.get_my_pot_detail(p_pot_id uuid)
 returns table (
   id uuid,
   title text,
@@ -82,5 +86,11 @@ as $$
   order by c.created_at desc;
 $$;
 
+revoke all on function public.get_my_pot_detail(uuid) from public;
+revoke all on function public.get_my_pot_detail(uuid) from anon;
+revoke all on function public.get_my_pot_detail(uuid) from authenticated;
 grant execute on function public.get_my_pot_detail(uuid) to authenticated;
+revoke all on function public.get_my_pot_contributions(uuid) from public;
+revoke all on function public.get_my_pot_contributions(uuid) from anon;
+revoke all on function public.get_my_pot_contributions(uuid) from authenticated;
 grant execute on function public.get_my_pot_contributions(uuid) to authenticated;

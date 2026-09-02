@@ -6,6 +6,7 @@ import { getCopy } from "@/lib/getCopy";
 import { logServerError } from "@/lib/logger";
 import { sanitizeRequiredTitle, sanitizeUserText } from "@/lib/security";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { parseEuroAmountToMinorUnits } from "@/lib/utils";
 import type { PotFormState, PotStatus } from "@/types/database";
 
 const copy = getCopy();
@@ -19,10 +20,11 @@ const updatePotSchema = z.object({
   goal_amount: z
     .string()
     .optional()
-    .refine((value) => !value || /^\d+$/.test(value), copy.validation.pot.goalInteger)
-    .transform((value) => (value ? Number(value) * 100 : null))
-    .refine((value) => value === null || value > 0, copy.validation.pot.goalPositive),
+    .refine((value) => !value || /^\d+(?:[.,]\d{1,2})?$/.test(value), "L’objectif doit être un montant en euros valide")
+    .transform((value) => parseEuroAmountToMinorUnits(value))
+    .refine((value) => value === null || (Number.isInteger(value) && value > 0), copy.validation.pot.goalPositive),
   privacy_mode: z.enum(["total_only", "standard", "blind_to_owner"]),
+  mystery_mode: z.boolean().optional(),
   messages_visible_to_beneficiary: z.boolean().optional()
 });
 
@@ -30,6 +32,15 @@ function revalidatePotRoutes(potId: string) {
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/pots");
   revalidatePath(`/dashboard/pots/${potId}`);
+}
+
+function revalidatePotRoutesWithShareToken(potId: string, shareToken?: string | null) {
+  revalidatePotRoutes(potId);
+
+  if (shareToken) {
+    revalidatePath(`/p/${shareToken}`);
+    revalidatePath(`/p/${shareToken}/reveal`);
+  }
 }
 
 export async function updateDashboardPotAction(
@@ -45,6 +56,7 @@ export async function updateDashboardPotAction(
     currency: formData.get("currency"),
     goal_amount: formData.get("goal_amount") || undefined,
     privacy_mode: formData.get("privacy_mode"),
+    mystery_mode: formData.get("mystery_mode") === "on",
     messages_visible_to_beneficiary: formData.get("messages_visible_to_beneficiary") === "on"
   });
 
@@ -123,6 +135,7 @@ export async function updateDashboardPotAction(
       currency: parsed.data.currency,
       goal_amount: parsed.data.goal_amount,
       privacy_mode: parsed.data.privacy_mode,
+      mystery_mode: parsed.data.mystery_mode ?? false,
       messages_visible_to_beneficiary: parsed.data.messages_visible_to_beneficiary ?? false
     })
     .eq("id", parsed.data.pot_id)
@@ -187,6 +200,65 @@ export async function updateDashboardPotStatusAction(formData: FormData) {
   }
 
   revalidatePotRoutes(parsed.data.pot_id);
+}
+
+export async function revealDashboardPotAction(formData: FormData) {
+  const parsed = z
+    .object({
+      pot_id: z.string().uuid(copy.validation.pot.missingPot)
+    })
+    .safeParse({
+      pot_id: formData.get("pot_id")
+    });
+
+  if (!parsed.success) {
+    throw new Error(parsed.error.issues[0]?.message ?? copy.errors.invalidAction);
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error(copy.errors.sessionExpired);
+  }
+
+  const { data: pot, error: potError } = await supabase
+    .from("pots")
+    .select("id, share_token, revealed")
+    .eq("id", parsed.data.pot_id)
+    .eq("owner_user_id", user.id)
+    .maybeSingle();
+
+  if (potError || !pot) {
+    logServerError("pots.reveal", "Failed to load pot before reveal", potError ?? "missing pot", {
+      potId: parsed.data.pot_id,
+      userId: user.id
+    });
+    throw new Error(copy.errors.verifyPotStateFailed);
+  }
+
+  if (!pot.revealed) {
+    const { error } = await supabase
+      .from("pots")
+      .update({
+        revealed: true,
+        revealed_at: new Date().toISOString()
+      })
+      .eq("id", parsed.data.pot_id)
+      .eq("owner_user_id", user.id);
+
+    if (error) {
+      logServerError("pots.reveal", "Failed to reveal pot", error, {
+        potId: parsed.data.pot_id,
+        userId: user.id
+      });
+      throw new Error(copy.errors.updateStatusFailed);
+    }
+  }
+
+  revalidatePotRoutesWithShareToken(parsed.data.pot_id, pot.share_token);
 }
 
 

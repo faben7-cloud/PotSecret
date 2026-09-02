@@ -1,12 +1,14 @@
-﻿"use server";
+"use server";
 
 import { redirect } from "next/navigation";
+import Stripe from "stripe";
 import { z } from "zod";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getBaseUrl } from "@/lib/env";
 import { getCopy } from "@/lib/getCopy";
 import { logServerError, logServerWarn } from "@/lib/logger";
-import { getPublicPotByToken } from "@/lib/pots";
+import { canCreateCheckout } from "@/lib/payment-security";
+import { getPotForCheckoutByShareToken } from "@/lib/pots";
 import { sanitizeUserText } from "@/lib/security";
 import { getStripe } from "@/lib/stripe";
 import type { ContributionFormState } from "@/types/database";
@@ -61,13 +63,12 @@ export async function prepareContributionAction(
     };
   }
 
-  const pot = await getPublicPotByToken(parsed.data.share_token);
+  const pot = await getPotForCheckoutByShareToken(parsed.data.share_token);
 
-  if (!pot || pot.status !== "open") {
+  if (!canCreateCheckout(pot)) {
     logServerWarn("contribution.prepare", "Contribution attempted on unavailable pot", {
       shareToken: parsed.data.share_token,
-      potFound: Boolean(pot),
-      potStatus: pot?.status
+      potFound: Boolean(pot)
     });
 
     return {
@@ -80,7 +81,7 @@ export async function prepareContributionAction(
   const isAnonymous = parsed.data.is_anonymous ?? false;
   const messageBody = sanitizeUserText(parsed.data.message, { maxLength: 500, preserveNewlines: true });
 
-  let session;
+  let session: Stripe.Checkout.Session;
 
   try {
     session = await stripe.checkout.sessions.create({
@@ -119,9 +120,20 @@ export async function prepareContributionAction(
       }
     });
   } catch (error) {
+    const stripeContext =
+      error instanceof Stripe.errors.StripeError
+        ? {
+            stripeType: error.type,
+            stripeCode: error.code,
+            stripeParam: error.param,
+            stripeStatusCode: error.statusCode
+          }
+        : undefined;
+
     logServerError("contribution.prepare", "Failed to create Stripe Checkout session", error, {
       potId: pot.id,
-      shareToken: parsed.data.share_token
+      shareToken: parsed.data.share_token,
+      ...stripeContext
     });
 
     return {
@@ -130,35 +142,17 @@ export async function prepareContributionAction(
   }
 
   const admin = createSupabaseAdminClient();
+  const { error: insertError } = await admin.from("contributions").insert({
+    pot_id: pot.id,
+    stripe_checkout_session_id: session.id,
+    stripe_payment_intent_id: typeof session.payment_intent === "string" ? session.payment_intent : null,
+    amount: parsed.data.amount,
+    currency: pot.currency,
+    status: "pending",
+    contributor_display_name: contributorDisplayName,
+    is_anonymous: isAnonymous
+  });
 
-console.log("ACTIONS session.id:", session.id);
-console.log("ACTIONS pot.id:", pot.id);
-console.log("ACTIONS amount:", parsed.data.amount);
-console.log("ACTIONS currency:", pot.currency);
-
-const insertPayload = {
-  pot_id: pot.id,
-  stripe_checkout_session_id: session.id,
-  stripe_payment_intent_id:
-    typeof session.payment_intent === "string"
-      ? session.payment_intent
-      : null,
-  amount: parsed.data.amount,
-  currency: pot.currency,
-  status: "pending",
-  contributor_display_name: contributorDisplayName,
-  is_anonymous: isAnonymous,
-  message_body: messageBody
-};
-
-console.log("ACTIONS insertPayload:", insertPayload);
-const { data: insertedContribution, error: insertError } = await admin
-  .from("contributions")
-  .insert(insertPayload)
-  .select();
-  
-console.log("ACTIONS insertedContribution:", insertedContribution);
-console.log("ACTIONS insertError:", insertError);
   if (insertError) {
     logServerError("contribution.prepare", "Failed to persist pending contribution", insertError, {
       potId: pot.id,
