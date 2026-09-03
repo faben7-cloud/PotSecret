@@ -8,7 +8,6 @@ import type { ContributionFormState } from "@/types/database";
 
 const initialState: ContributionFormState = {};
 const quickAmounts = [10, 20, 30, 50] as const;
-const serviceFeeRate = 0.04;
 
 function parseAmount(value: string) {
   const normalized = value.replace(/\s|€/g, "").replace(",", ".");
@@ -27,13 +26,9 @@ function toCents(amount: number) {
 
 function buildContributionSummary(amount: number) {
   const totalCents = toCents(amount);
-  const serviceFeeCents = Math.round(totalCents * serviceFeeRate);
-  const netCents = totalCents - serviceFeeCents;
 
   return {
-    totalCents,
-    serviceFeeCents,
-    netCents
+    totalCents
   };
 }
 
@@ -67,14 +62,16 @@ function SubmitButton({
 export function ContributionForm({
   shareToken,
   currency,
-  disabled
+  disabled,
+  initialAmount = ""
 }: {
   shareToken: string;
   currency: string;
   disabled?: boolean;
+  initialAmount?: string;
 }) {
   const [state, formAction] = useFormState(prepareContributionAction, initialState);
-  const [amountValue, setAmountValue] = useState("");
+  const [amountValue, setAmountValue] = useState(initialAmount);
   const amountInputRef = useRef<HTMLInputElement>(null);
 
   const parsedAmount = parseAmount(amountValue);
@@ -221,21 +218,12 @@ export function ContributionForm({
               </span>
             </div>
             <div className="flex items-center justify-between gap-4">
-              <span>Frais de service inclus :</span>
+              <span>Montant ajouté au pot :</span>
               <span className="font-semibold text-[#111827]">
-                {summary ? formatCurrency(summary.serviceFeeCents, currency) : "—"}
-              </span>
-            </div>
-            <div className="flex items-center justify-between gap-4">
-              <span>Montant reversé au pot :</span>
-              <span className="font-semibold text-[#111827]">
-                {summary ? formatCurrency(summary.netCents, currency) : "—"}
+                {summary ? formatCurrency(summary.totalCents, currency) : "—"}
               </span>
             </div>
           </div>
-          <p className="mt-4 text-xs leading-5 text-[#6B7280]">
-            Les frais de service permettent de sécuriser les paiements et de faire fonctionner PotSecret.
-          </p>
         </div>
 
         {state.error ? <p className="text-sm text-red-600">{state.error}</p> : null}

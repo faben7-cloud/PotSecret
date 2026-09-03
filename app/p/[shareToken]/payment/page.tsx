@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { PaymentPageFooter } from "@/components/layout/payment-page-footer";
 import { PaymentPageHeader } from "@/components/layout/payment-page-header";
-import { PaymentPageForm } from "@/components/pot/payment-page-form";
+import { ContributionForm } from "@/components/pot/contribution-form";
 import { getPublicPotByToken } from "@/lib/pots";
 
 const trustItems = [
@@ -87,7 +87,7 @@ export default async function PublicPotPaymentPage({
         </section>
 
         <section>
-          <PaymentPageForm currency={pot.currency} initialAmount={resolvedSearchParams?.amount ?? ""} />
+          <ContributionForm shareToken={shareToken} currency={pot.currency} disabled={!pot.is_open} initialAmount={resolvedSearchParams?.amount ?? ""} />
         </section>
 
         <section>
