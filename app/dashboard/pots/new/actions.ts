@@ -85,8 +85,9 @@ export async function createDashboardPotAction(
     goal_amount: getStringValue(formData.get("goal_amount")),
     privacy_mode: rawPrivacyMode ?? "total_only",
     mystery_mode: formData.get("mystery_mode") === "on"
+    });
 
-  if (!parsed.success) {
+if (!parsed.success) {
     const fieldErrors: PotFormState["fieldErrors"] = {};
 
     for (const issue of parsed.error.issues) {
