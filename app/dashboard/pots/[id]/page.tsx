@@ -1,6 +1,7 @@
 ﻿import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { revealDashboardPotAction } from "./actions";
 
 type PageProps = {
   params: {
@@ -93,7 +94,25 @@ export default async function PotDetailPage({ params }: PageProps) {
           >
             Ouvrir la page publique
           </a>
+          
+          {pot.mystery_mode && !pot.revealed ? (
+  <form action={revealDashboardPotAction}>
+    <input type="hidden" name="pot_id" value={pot.id} />
+
+    <button
+      type="submit"
+      className="inline-flex items-center justify-center rounded-full bg-ink px-5 py-3 text-sm font-semibold text-white hover:bg-ink/90"
+    >
+      Révéler la surprise
+    </button>
+  </form>
+) : pot.mystery_mode && pot.revealed ? (
+  <span className="inline-flex items-center rounded-full bg-mist px-5 py-3 text-sm font-semibold text-ink">
+    Surprise révélée
+  </span>
+) : null}
         </div>
+        
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
