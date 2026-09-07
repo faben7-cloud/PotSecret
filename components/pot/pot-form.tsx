@@ -159,7 +159,29 @@ export function PotForm({
           </select>
         </div>
       </div>
+      
+<div className="rounded-xl border border-ink/10 bg-mist p-4">
+  <label className="flex items-start gap-3">
+    <input
+      type="checkbox"
+      name="mystery_mode"
+      className="mt-1 h-4 w-4"
+    />
 
+    <span>
+      <span className="block font-semibold text-ink">
+        Activer le mode mystère
+      </span>
+
+      <span className="mt-1 block text-sm text-ink/70">
+        Les identités des participants restent masquées jusqu’à la révélation
+        de la surprise. Les contributions anonymes resteront anonymes même après
+        la révélation.
+      </span>
+    </span>
+  </label>
+  </div>
+      
       <div className="space-y-4 border-t pt-4">
         <h3 className="text-lg font-semibold text-ink">Bénéficiaire</h3>
 
