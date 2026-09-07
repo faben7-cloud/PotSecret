@@ -54,7 +54,8 @@ const createPotSchema = z.object({
       "L’objectif doit être positif"
     ),
 
-  privacy_mode: z.enum(["total_only", "standard", "blind_to_owner"])
+privacy_mode: z.enum(["total_only", "standard", "blind_to_owner"]),
+mystery_mode: z.boolean().optional()
 });
 
 function generateShareToken() {
@@ -82,8 +83,8 @@ export async function createDashboardPotAction(
     event_date: getStringValue(formData.get("event_date")),
     currency: rawCurrency ?? "EUR",
     goal_amount: getStringValue(formData.get("goal_amount")),
-    privacy_mode: rawPrivacyMode ?? "total_only"
-  });
+    privacy_mode: rawPrivacyMode ?? "total_only",
+    mystery_mode: formData.get("mystery_mode") === "on"
 
   if (!parsed.success) {
     const fieldErrors: PotFormState["fieldErrors"] = {};
@@ -128,6 +129,7 @@ export async function createDashboardPotAction(
     currency: parsed.data.currency,
     goal_amount: parsed.data.goal_amount,
     privacy_mode: parsed.data.privacy_mode,
+    mystery_mode: parsed.data.mystery_mode ?? false,
     status: "open",
     share_token: generateShareToken()
   };
