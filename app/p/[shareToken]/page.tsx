@@ -187,9 +187,8 @@ export default async function PublicPotPage({
                   const requiredMilestone = getRequiredMilestone(index);
                   const hasMessage = Boolean(contribution.message_body?.trim());
                   const displayName =
-                    mysteryMode || !contribution.visible_identity
-                      ? contribution.visible_identity || renderTemplate(t("public.pot.participant"), { index: index + 1 })
-                      : renderTemplate(t("public.pot.participant"), { index: index + 1 });
+  contribution.visible_identity ||
+  renderTemplate(t("public.pot.participant"), { index: index + 1 });
                   const visibleHint =
                     contribution.visible_hint_level_3 ||
                     contribution.visible_hint_level_2 ||
