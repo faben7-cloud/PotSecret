@@ -2,6 +2,7 @@
 import { notFound } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { revealDashboardPotAction } from "./actions";
+import type { PotDetail } from "@/types/database";
 
 type PageProps = {
   params: {
@@ -21,12 +22,10 @@ export default async function PotDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  const { data: pot, error: potError } = await supabase
-    .from("pots")
-    .select("*")
-    .eq("id", potId)
-    .eq("owner_user_id", user.id)
-    .maybeSingle();
+  const { data: potRows, error: potError } = await supabase.rpc("get_my_pot_detail", {
+    p_pot_id: potId
+  });
+  const pot = (potRows?.[0] as PotDetail | undefined) ?? null;
 
   if (potError) {
     throw new Error(potError.message);
@@ -40,6 +39,7 @@ export default async function PotDetailPage({ params }: PageProps) {
     .from("contributions")
     .select("*")
     .eq("pot_id", potId)
+    .eq("status", "confirmed")
     .order("created_at", { ascending: false });
 
   if (contributionsError) {
@@ -48,12 +48,9 @@ export default async function PotDetailPage({ params }: PageProps) {
 
   const safeContributions = contributions ?? [];
 
-  const total = safeContributions.reduce(
-    (sum, contribution) => sum + (contribution.amount ?? 0),
-    0
-  );
+  const total = Number(pot.confirmed_total_amount);
 
-  const contributionCount = safeContributions.length;
+  const contributionCount = Number(pot.confirmed_contribution_count);
   const average =
     contributionCount > 0 ? Math.round(total / contributionCount) : 0;
 

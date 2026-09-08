@@ -1,15 +1,15 @@
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { CheckoutPot } from "@/lib/payment-security";
-import type { PotRevealContribution, PublicPot } from "@/types/database";
+import type { PotRevealContribution, PublicPot, PotSummary } from "@/types/database";
 
 export async function getMyPots() {
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return [];
-  const { data, error } = await supabase.from("pots").select("*").eq("owner_user_id", user.id).order("created_at", { ascending: false });
+  const { data, error } = await supabase.rpc("list_my_pots");
   if (error) throw new Error(error.message);
-  return data ?? [];
+  return (data ?? []) as PotSummary[];
 }
 
 export async function getMyPotContributions(potId: string) {

@@ -135,8 +135,6 @@ if (!parsed.success) {
     share_token: generateShareToken()
   };
 
-  console.log("CREATE POT PAYLOAD:", payload);
-
   const { data, error } = await supabase
     .from("pots")
     .insert(payload)
@@ -144,18 +142,10 @@ if (!parsed.success) {
     .single();
 
   if (error || !data) {
-    console.error("createDashboardPotAction error:", error);
+    console.error("createDashboardPotAction failed", { code: error?.code });
 
     return {
-      error: [
-        "Erreur création pot",
-        error?.message ? `message=${error.message}` : null,
-        error?.details ? `details=${error.details}` : null,
-        error?.hint ? `hint=${error.hint}` : null,
-        error?.code ? `code=${error.code}` : null
-      ]
-        .filter(Boolean)
-        .join(" | ")
+      error: "Impossible de créer la cagnotte. Veuillez réessayer."
     };
   }
 

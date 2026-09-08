@@ -8,23 +8,23 @@ import { formatCurrency } from "@/lib/utils";
 async function getPayoutContext(id: string, userId: string) {
   const supabase = await createSupabaseServerClient();
 
-  const { data: pot } = await supabase
+  const { data: pot, error: potError } = await supabase
     .from("pots")
     .select("*")
     .eq("id", id)
     .eq("owner_user_id", userId)
     .maybeSingle();
 
+  if (potError) {
+    throw new Error("Impossible de vérifier le solde de la cagnotte.");
+  }
+
   if (!pot) {
     return null;
   }
 
-  const [{ data: contributions }, { data: payouts }] = await Promise.all([
-    supabase
-      .from("contributions")
-      .select("amount")
-      .eq("pot_id", id)
-      .eq("status", "confirmed"),
+  const [{ data: potDetails, error: detailError }, { data: payouts, error: payoutsError }] = await Promise.all([
+    supabase.rpc("get_my_pot_detail", { p_pot_id: id }),
     supabase
       .from("payouts")
       .select("*")
@@ -32,7 +32,14 @@ async function getPayoutContext(id: string, userId: string) {
       .order("paid_at", { ascending: false })
   ]);
 
-  const confirmedTotalCents = contributions?.reduce((sum, contribution) => sum + (contribution.amount || 0), 0) ?? 0;
+  if (detailError || payoutsError || !potDetails?.[0]) {
+    throw new Error("Impossible de vérifier le solde de la cagnotte.");
+  }
+
+  const confirmedTotalCents = Number(potDetails[0].confirmed_total_amount);
+  if (!Number.isSafeInteger(confirmedTotalCents) || confirmedTotalCents < 0) {
+    throw new Error("Impossible de vérifier le solde de la cagnotte.");
+  }
   const paidGrossCents = payouts?.reduce((sum, payout) => sum + (payout.gross_amount || 0), 0) ?? 0;
   const paidCommissionCents = payouts?.reduce((sum, payout) => sum + (payout.commission_amount || 0), 0) ?? 0;
   const paidNetCents = payouts?.reduce((sum, payout) => sum + (payout.net_amount || 0), 0) ?? 0;

@@ -46,7 +46,7 @@ export default async function PublicPotSuccessPage({
     notFound();
   }
 
-  const { data: contribution } = sessionId
+  const { data: contribution } = session
     ? await admin
         .from("contributions")
         .select(
