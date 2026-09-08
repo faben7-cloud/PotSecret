@@ -414,3 +414,46 @@ test('success page still displays the verified matching Stripe contribution', as
   assert.match(output, /Alice/);
   assert.match(output, /20(?:[,.]00)?\s*€/);
 });
+
+
+for (const [privacy, count] of [['total_only', 2], ['total_only', 0], ['standard', 2]]) {
+  test('dashboard contribution state: ' + privacy + ', confirmed=' + count, async () => {
+    await db.query('update pots set privacy_mode=$1 where id=$2', [privacy, ids.pot]);
+    const created = [];
+    for (let i = 0; i < count; i++) {
+      created.push(await contribution(db, { status: 'confirmed', amount: 200 + i * 100,
+        contributor_display_name: 'PRIVATE_PARTICIPANT_' + i,
+        stripe_checkout_session_id: 'cs_private_state_' + i }));
+    }
+    await db.exec('set role authenticated');
+    const visible = (await db.query('select * from contributions where pot_id=$1', [ids.pot])).rows;
+    assert.equal(visible.length, privacy === 'standard' ? count : 0);
+    const page = loadSource('app/dashboard/pots/[id]/page.tsx', {
+      '@/lib/supabase/server': { createSupabaseServerClient: async () => adapter(db) },
+      './actions': { revealDashboardPotAction() {} },
+      'next/link': 'a', 'next/navigation': { notFound() { throw new Error('Not found'); } },
+    }, { process: { env: { NEXT_PUBLIC_SITE_URL: 'https://preview.example.invalid' } } }).default;
+    const output = textContent(await page({ params: { id: ids.pot } }));
+    const hidden = 'Les détails des contributions sont masqués par le mode de confidentialité de cette cagnotte.';
+    const empty = 'Aucune contribution pour le moment.';
+    if (count === 0) {
+      assert.ok(output.includes(empty));
+      assert.ok(!output.includes(hidden));
+    } else {
+      assert.match(output, /Total collecté\s+5(?:[,.]00)?\s*€/);
+      assert.match(output, /Contributions\s+2\s+Panier moyen\s+2[,.]50\s*€/);
+      assert.ok(!output.includes(empty));
+      if (privacy === 'total_only') {
+        assert.ok(output.includes(hidden));
+        assert.doesNotMatch(output, /PRIVATE_PARTICIPANT_|cs_private_state_|(?:2|3)[,.]00\s*€/);
+        for (const row of created) assert.ok(!output.includes(row.id));
+      } else {
+        assert.ok(!output.includes(hidden));
+        assert.ok(output.includes('PRIVATE_PARTICIPANT_0'));
+        assert.ok(output.includes('PRIVATE_PARTICIPANT_1'));
+        assert.match(output, /2[,.]00\s*€/);
+        assert.match(output, /3[,.]00\s*€/);
+      }
+    }
+  });
+}

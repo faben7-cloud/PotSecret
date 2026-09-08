@@ -160,7 +160,9 @@ export default async function PotDetailPage({ params }: PageProps) {
 
         {safeContributions.length === 0 ? (
           <p className="mt-4 text-sm text-ink/60">
-            Aucune contribution pour le moment.
+            {contributionCount > 0
+              ? "Les détails des contributions sont masqués par le mode de confidentialité de cette cagnotte."
+              : "Aucune contribution pour le moment."}
           </p>
         ) : (
           <div className="mt-4 overflow-x-auto">
