@@ -239,7 +239,7 @@ for (const checked of [false, true]) {
     const form = new FormData();
     form.set('title', 'Private birthday title');
     if (checked) form.set('mystery_mode', 'on');
-    await assert.rejects(action({}, form), /REDIRECT:\/dashboard\/pots\/[0-9a-f-]+/);
+    await assert.rejects(action({}, form), /REDIRECT:\/fr\/dashboard\/pots\/[0-9a-f-]+/);
     const [pot] = (await db.query("select * from pots where title='Private birthday title'")).rows;
     assert.equal(pot.mystery_mode, checked);
     assert.equal(logs.length, 0, 'Creation must not log private title, owner UUID or share token');
@@ -290,7 +290,7 @@ test('public page displays RPC-authorized identity outside mystery mode', async 
         is_open: true, event_type: 'birthday', confirmed_total_amount: 2000, confirmed_contribution_count: 1 }),
       getPublicPotRevealContributions: async () => [{ visible_identity: 'Alice', created_at: '2026-09-07', pot_progress_percentage: 100 }],
     },
-    '@/lib/i18n-server': { getRequestLocale: () => 'fr' },
+    'next/headers': { headers: () => new Headers() },
     '@/components/pot/contribution-form': { ContributionForm: 'contribution-form' },
     'next/link': 'a', 'next/navigation': { notFound() { throw new Error('Not found'); } },
   }).default;
@@ -319,7 +319,7 @@ test('success page never falls back to private contribution data when Stripe ver
     '@/lib/supabase/admin': { createSupabaseAdminClient: () => client },
     '@/lib/stripe': { getStripe: () => ({ checkout: { sessions: { async retrieve() { throw new Error('Stripe unavailable'); } } } }) },
     '@/lib/pots': { getPublicPotByToken: async () => ({ title: 'Other pot', currency: 'EUR', event_type: 'birthday' }) },
-    '@/lib/i18n-server': { getRequestLocale: () => 'fr' },
+    'next/headers': { headers: () => new Headers() },
     'next/link': 'a', 'next/navigation': { notFound() { throw new Error('Not found'); } },
   }).default;
   const output = textContent(await page({ params: Promise.resolve({ shareToken: 'other-public-test-token' }),

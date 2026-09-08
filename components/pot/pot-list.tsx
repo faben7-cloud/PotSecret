@@ -1,3 +1,4 @@
+import { localizeRequestPath } from "@/lib/i18n-server";
 ﻿import Link from "next/link";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { getCopy } from "@/lib/getCopy";
@@ -40,7 +41,7 @@ export function PotList({
                 <h2 className="text-2xl font-semibold text-ink">{pot.title}</h2>
                 <p className="mt-1 text-sm leading-6 text-ink/70">{privacyModeOwnerSummary[pot.privacy_mode]}</p>
               </div>
-              <p className="text-sm text-ink/65">{`${copy.potList.publicLink}: /p/${pot.share_token}`}</p>
+              <p className="text-sm text-ink/65">{`${copy.potList.publicLink}: ${localizeRequestPath(`/p/${pot.share_token}`)}`}</p>
             </div>
 
             <div className="rounded-[1.5rem] bg-mist px-5 py-4 text-right">
@@ -56,7 +57,7 @@ export function PotList({
 
           <div className="mt-5">
             <Link
-              href={`/dashboard/pots/${pot.id}`}
+              href={localizeRequestPath(`/dashboard/pots/${pot.id}`)}
               className="inline-flex items-center justify-center rounded-full border border-ink/10 bg-white px-4 py-2 text-sm font-semibold text-ink hover:border-ink/20"
             >
               {copy.buttons.seeDetails}

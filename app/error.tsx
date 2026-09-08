@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useEffect } from "react";
+import { usePathname } from "next/navigation";
+import { getLocaleFromPathname, localizePathname } from "@/lib/i18n";
 import { getCopy } from "@/lib/getCopy";
 
 const copy = getCopy();
@@ -12,6 +14,7 @@ export default function GlobalError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const locale = getLocaleFromPathname(usePathname());
   useEffect(() => {
     console.error("PotSecret global error", error);
   }, [error]);
@@ -31,7 +34,7 @@ export default function GlobalError({
             {copy.buttons.retry}
           </button>
           <Link
-            href="/dashboard"
+            href={localizePathname("/dashboard", locale)}
             className="inline-flex items-center justify-center rounded-full border border-ink/10 bg-white px-5 py-3 text-sm font-semibold text-ink hover:border-ink/20"
           >
             {copy.buttons.backDashboard}

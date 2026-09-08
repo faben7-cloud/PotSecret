@@ -88,10 +88,17 @@ export function toPublicPath(pathname: string) {
 }
 
 export function localizePathname(pathname: string, locale: Locale) {
-  const stripped = stripLocaleFromPathname(pathname);
+  // Keep queries/fragments byte-for-byte, including duplicate parameters.
+  if (!pathname.startsWith("/") || pathname.startsWith("//")) return pathname;
+  const suffixIndex = pathname.search(/[?#]/);
+  const path = suffixIndex < 0 ? pathname : pathname.slice(0, suffixIndex);
+  const suffix = suffixIndex < 0 ? "" : pathname.slice(suffixIndex);
+  const stripped = stripLocaleFromPathname(path);
+  if (/^\/(?:api|_next|health)(?:\/|$)/.test(stripped) || /^\/[^/]+\.[^/]+$/.test(stripped)) {
+    return stripped + suffix;
+  }
   const publicPath = toPublicPath(stripped);
-
-  return publicPath === "/" ? `/${locale}` : `/${locale}${publicPath}`;
+  return (publicPath === "/" ? `/${locale}` : `/${locale}${publicPath}`) + suffix;
 }
 
 export function getDictionary(locale: Locale): Dictionary {

@@ -1,3 +1,5 @@
+import { buildLoginRedirect } from "@/lib/auth";
+import { localizeRequestPath } from "@/lib/i18n-server";
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
 import { notFound, redirect } from "next/navigation";
@@ -71,7 +73,7 @@ export default async function PayoutPage({
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect("/connexion");
+    redirect(buildLoginRedirect(`/dashboard/pots/${id}/payout`));
   }
 
   const context = await getPayoutContext(id, user.id);
@@ -101,7 +103,7 @@ export default async function PayoutPage({
     } = await supabase.auth.getUser();
 
     if (!user) {
-      redirect("/connexion");
+      redirect(buildLoginRedirect(`/dashboard/pots/${id}/payout`));
     }
 
     const latestContext = await getPayoutContext(id, user.id);
@@ -147,7 +149,7 @@ export default async function PayoutPage({
           <h1 className="mt-2 text-3xl font-semibold text-ink">{pot.title}</h1>
         </div>
         <Link
-          href={`/dashboard/pots/${id}`}
+          href={localizeRequestPath(`/dashboard/pots/${id}`)}
           className="inline-flex items-center justify-center rounded-full border border-ink/10 bg-white px-4 py-2 text-sm font-semibold text-ink hover:border-ink/20"
         >
           Retour au pot

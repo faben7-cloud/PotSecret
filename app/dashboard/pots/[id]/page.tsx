@@ -1,3 +1,4 @@
+import { localizeRequestPath } from "@/lib/i18n-server";
 ﻿import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -60,7 +61,7 @@ export default async function PotDetailPage({ params }: PageProps) {
       currency: pot.currency ?? "EUR"
     }).format(amountInCents / 100);
 
-  const publicUrl = `${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}/p/${pot.share_token}`;
+  const publicUrl = `${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}${localizeRequestPath(`/p/${pot.share_token}`)}`;
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-8 py-8">
@@ -77,7 +78,7 @@ export default async function PotDetailPage({ params }: PageProps) {
 
         <div className="flex flex-wrap gap-3">
           <Link
-            href="/dashboard"
+            href={localizeRequestPath("/dashboard")}
             className="inline-flex items-center justify-center rounded-full border border-ink/10 bg-white px-5 py-3 text-sm font-semibold text-ink hover:border-ink/20"
           >
             Retour dashboard

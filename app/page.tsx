@@ -1,3 +1,4 @@
+import { localizeRequestPath } from "@/lib/i18n-server";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { homeCopy } from "@/lib/home-copy";
@@ -35,7 +36,7 @@ export default function HomePage() {
 
             <div className="flex flex-col gap-3 sm:flex-row">
               <Link
-                href={createSurpriseHref}
+                href={localizeRequestPath(createSurpriseHref)}
                 className="inline-flex min-h-12 items-center justify-center rounded-full bg-[#14B8A6] px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-[#14B8A6]/20 transition hover:bg-[#0f9f90]"
               >
                 {homeCopy.hero.primaryCta}
@@ -205,7 +206,7 @@ export default function HomePage() {
           <p className="mt-4 text-sm leading-6 text-white/75 sm:text-base">{homeCopy.finalCta.subtitle}</p>
           <div className="mt-7">
             <Link
-              href={createSurpriseHref}
+              href={localizeRequestPath(createSurpriseHref)}
               className="inline-flex min-h-12 items-center justify-center rounded-full bg-[#14B8A6] px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-[#14B8A6]/20 transition hover:bg-[#0f9f90]"
             >
               {homeCopy.finalCta.button}

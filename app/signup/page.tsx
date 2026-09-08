@@ -1,3 +1,4 @@
+import { getRequestLocale, localizeRequestPath } from "@/lib/i18n-server";
 ﻿import Link from "next/link";
 import { redirect } from "next/navigation";
 import { EmailAuthForm } from "@/components/auth/login-form";
@@ -12,7 +13,7 @@ export default async function SignupPage({
   searchParams?: Promise<{ next?: string; error?: string }>;
 }) {
   const params = searchParams ? await searchParams : undefined;
-  const next = normalizeInternalPath(params?.next, "/dashboard");
+  const next = localizeRequestPath(normalizeInternalPath(params?.next, "/dashboard"));
   const error = params?.error;
   const session = await getCurrentSession();
 
@@ -27,11 +28,11 @@ export default async function SignupPage({
         <p className="text-sm leading-6 text-ink/70">{copy.auth.signupPage.description}</p>
       </div>
       <div className="rounded-[2rem] border border-white/60 bg-white/95 p-6 shadow-card">
-        <EmailAuthForm mode="signup" next={next} initialError={error} />
+        <EmailAuthForm locale={getRequestLocale()} mode="signup" next={next} initialError={error} />
       </div>
       <p className="text-center text-sm text-ink/65">
         {copy.auth.signupPage.hasAccount}{" "}
-        <Link href={`/login?next=${encodeURIComponent(next)}`} className="font-medium text-coral hover:text-coral/80">
+        <Link href={localizeRequestPath(`/login?next=${encodeURIComponent(next)}`)} className="font-medium text-coral hover:text-coral/80">
           {copy.buttons.loginLink}
         </Link>
       </p>

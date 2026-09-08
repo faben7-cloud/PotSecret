@@ -29,10 +29,11 @@ function loadSource(file, mocks = {}, globals = {}) {
     }).outputText;
     const requireLocal = (name) => {
       if (Object.hasOwn(mocks, name)) return mocks[name];
+      if (name === 'next/headers') return { headers: () => new Headers() };
       if (['stripe', 'zod', 'react/jsx-runtime', 'clsx'].includes(name)) return require(name);
       if (/^@\/locales\/(fr|en|es|it|de)\.json$/.test(name)) return JSON.parse(fs.readFileSync(path.join(root, name.slice(2)), 'utf8'));
       if (['@/lib/payment-security', '@/lib/security', '@/lib/payouts', '@/lib/copy',
-        '@/lib/getCopy', '@/lib/utils', '@/lib/i18n'].includes(name)) return load(name.slice(2));
+        '@/lib/getCopy', '@/lib/utils', '@/lib/i18n', '@/lib/i18n-server', '@/lib/auth'].includes(name)) return load(name.slice(2));
       throw new Error(`Unmocked dependency: ${name} in ${relative}`);
     };
     const context = { exports: mod.exports, module: mod, require: requireLocal,

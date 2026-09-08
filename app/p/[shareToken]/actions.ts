@@ -1,5 +1,8 @@
 "use server";
 
+import { localizeRequestPath } from "@/lib/i18n-server";
+
+
 import { redirect } from "next/navigation";
 import Stripe from "stripe";
 import { z } from "zod";
@@ -100,8 +103,8 @@ export async function prepareContributionAction(
           }
         }
       ],
-      success_url: `${getBaseUrl()}/p/${parsed.data.share_token}/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${getBaseUrl()}/p/${parsed.data.share_token}/cancel`,
+      success_url: `${getBaseUrl()}${localizeRequestPath(`/p/${parsed.data.share_token}/success`)}?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${getBaseUrl()}${localizeRequestPath(`/p/${parsed.data.share_token}/cancel`)}`,
       metadata: {
         pot_id: pot.id,
         share_token: parsed.data.share_token,

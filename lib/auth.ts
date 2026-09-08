@@ -1,3 +1,4 @@
+import { localizeRequestPath } from "@/lib/i18n-server";
 import type { Session, User } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
 import { normalizeInternalPath } from "@/lib/security";
@@ -32,7 +33,7 @@ export async function getCurrentUser(): Promise<User | null> {
 }
 
 export function buildLoginRedirect(nextPath: string) {
-  return `/login?next=${encodeURIComponent(normalizeInternalPath(nextPath))}`;
+  return localizeRequestPath(`/login?next=${encodeURIComponent(localizeRequestPath(normalizeInternalPath(nextPath)))}`);
 }
 
 export async function requireUser(nextPath: string): Promise<User> {

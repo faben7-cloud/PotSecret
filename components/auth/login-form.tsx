@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { type FormEvent, useState } from "react";
+import { localizePathname, type Locale } from "@/lib/i18n";
 import { getCopy } from "@/lib/getCopy";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
@@ -27,10 +28,12 @@ function getFriendlyError(message: string, mode: AuthMode) {
 
 export function EmailAuthForm({
   next,
+  locale,
   mode,
   initialError
 }: {
   next: string;
+  locale: Locale;
   mode: AuthMode;
   initialError?: string;
 }) {
@@ -54,7 +57,7 @@ export function EmailAuthForm({
     setMessage("");
 
     const supabase = createSupabaseBrowserClient();
-    const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}&mode=${mode}`;
+    const redirectTo = `${window.location.origin}${localizePathname("/auth/callback", locale)}?next=${encodeURIComponent(next)}&mode=${mode}`;
 
     const { error } = await supabase.auth.signInWithOtp({
       email: normalizedEmail,

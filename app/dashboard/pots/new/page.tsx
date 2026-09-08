@@ -1,3 +1,4 @@
+import { localizeRequestPath } from "@/lib/i18n-server";
 ﻿import Link from "next/link";
 import { CreatePotForm } from "@/components/pot/create-pot-form";
 import { requireUser } from "@/lib/auth";
@@ -20,7 +21,7 @@ export default async function DashboardNewPotPage() {
       </div>
 
       <div>
-        <Link href="/dashboard/pots" className="text-sm font-medium text-coral hover:text-coral/80">
+        <Link href={localizeRequestPath("/dashboard/pots")} className="text-sm font-medium text-coral hover:text-coral/80">
           {copy.dashboard.pots.new.back}
         </Link>
       </div>

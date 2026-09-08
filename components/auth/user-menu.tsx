@@ -1,3 +1,4 @@
+import { localizeRequestPath } from "@/lib/i18n-server";
 ﻿import Link from "next/link";
 import { signOutAction } from "@/app/auth/actions";
 import { getCopy } from "@/lib/getCopy";
@@ -7,7 +8,7 @@ export function UserMenu({ email }: { email: string }) {
   return (
     <div className="flex items-center gap-2">
       <Link
-        href="/dashboard"
+        href={localizeRequestPath("/dashboard")}
         className="hidden rounded-full px-3 py-2 text-sm font-medium text-ink/80 hover:bg-white sm:inline-flex"
       >
         {copy.nav.dashboard}

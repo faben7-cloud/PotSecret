@@ -1,3 +1,4 @@
+import { localizeRequestPath } from "@/lib/i18n-server";
 ﻿import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getCopy } from "@/lib/getCopy";
@@ -33,13 +34,13 @@ export default async function PublicPotCancelPage({
 
         <div className="mt-8 flex flex-col gap-3 sm:flex-row">
           <Link
-            href={`/p/${shareToken}`}
+            href={localizeRequestPath(`/p/${shareToken}`)}
             className="inline-flex items-center justify-center rounded-full bg-coral px-5 py-3 text-sm font-semibold text-white hover:bg-coral/90"
           >
             {copy.buttons.resumeContribution}
           </Link>
           <Link
-            href="/"
+            href={localizeRequestPath("/")}
             className="inline-flex items-center justify-center rounded-full border border-ink/10 bg-white px-5 py-3 text-sm font-semibold text-ink hover:border-ink/20"
           >
             {copy.buttons.backHome}

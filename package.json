@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
-    "test": "node --test --experimental-strip-types tests/security.test.ts tests/payment-security.test.ts tests/p0-runtime.test.cjs tests/p0-privacy.test.cjs tests/i18n-routing.test.cjs"
+    "test": "node --test --experimental-strip-types tests/security.test.ts tests/payment-security.test.ts tests/p0-runtime.test.cjs tests/p0-privacy.test.cjs tests/i18n-routing.test.cjs tests/i18n-flows.test.cjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.5.2",

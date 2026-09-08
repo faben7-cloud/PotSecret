@@ -1,3 +1,4 @@
+import { localizeRequestPath } from "@/lib/i18n-server";
 ﻿import Link from "next/link";
 import { PotList } from "@/components/pot/pot-list";
 import { requireUser } from "@/lib/auth";
@@ -18,7 +19,7 @@ export default async function DashboardPotsPage() {
           <p className="text-sm text-ink/70">{copy.dashboard.pots.description}</p>
         </div>
         <Link
-          href="/dashboard/pots/new"
+          href={localizeRequestPath("/dashboard/pots/new")}
           className="inline-flex items-center justify-center rounded-full bg-ink px-5 py-3 text-sm font-semibold text-white hover:bg-ink/90"
         >
           {copy.buttons.createPot}

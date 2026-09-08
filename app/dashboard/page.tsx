@@ -1,3 +1,4 @@
+import { localizeRequestPath } from "@/lib/i18n-server";
 ﻿import Link from "next/link";
 import { PotList } from "@/components/pot/pot-list";
 import { KpiCard } from "@/components/ui/kpi-card";
@@ -48,7 +49,7 @@ export default async function DashboardPage() {
         />
         <div className="flex items-stretch">
           <Link
-            href="/dashboard/pots/new"
+            href={localizeRequestPath("/dashboard/pots/new")}
             className="inline-flex w-full items-center justify-center rounded-[1.5rem] bg-ink px-5 py-4 text-sm font-semibold text-white hover:bg-ink/90"
           >
             {copy.buttons.createPot}
@@ -62,7 +63,7 @@ export default async function DashboardPage() {
             <h2 className="text-2xl font-semibold text-ink">{copy.dashboard.home.listTitle}</h2>
             <p className="text-sm text-ink/70">{copy.dashboard.home.listSubtitle}</p>
           </div>
-          <Link href="/dashboard/pots" className="text-sm font-medium text-coral hover:text-coral/80">
+          <Link href={localizeRequestPath("/dashboard/pots")} className="text-sm font-medium text-coral hover:text-coral/80">
             {copy.buttons.dedicatedView}
           </Link>
         </div>

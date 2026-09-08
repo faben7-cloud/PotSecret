@@ -1,5 +1,8 @@
 "use server";
 
+import { localizeRequestPath } from "@/lib/i18n-server";
+
+
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -71,6 +74,6 @@ export async function createPotAction(
     };
   }
 
-  redirect("/pots");
+  redirect(localizeRequestPath("/pots"));
 }
 

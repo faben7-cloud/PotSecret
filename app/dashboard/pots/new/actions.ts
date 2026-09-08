@@ -1,5 +1,8 @@
 ﻿"use server";
 
+import { localizeRequestPath } from "@/lib/i18n-server";
+
+
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -149,5 +152,5 @@ if (!parsed.success) {
     };
   }
 
-  redirect(`/dashboard/pots/${data.id}`);
+  redirect(localizeRequestPath(`/dashboard/pots/${data.id}`));
 }
