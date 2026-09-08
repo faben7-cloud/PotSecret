@@ -2,13 +2,14 @@
 
 import type { ReactNode } from "react";
 import { usePathname } from "next/navigation";
+import { stripLocaleFromPathname, toInternalPath } from "@/lib/i18n";
 
 function isPublicPaymentPath(pathname: string | null) {
   if (!pathname) {
     return false;
   }
 
-  return /^\/p\/[^/]+\/payment$/.test(pathname);
+  return /^\/p\/[^/]+\/payment$/.test(toInternalPath(stripLocaleFromPathname(pathname)));
 }
 
 export function AppShell({
