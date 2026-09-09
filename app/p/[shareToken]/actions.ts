@@ -7,7 +7,7 @@ import { redirect } from "next/navigation";
 import Stripe from "stripe";
 import { z } from "zod";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { getBaseUrl } from "@/lib/env";
+import { getRequestBaseUrl } from "@/lib/request-url";
 import { getCopy } from "@/lib/getCopy";
 import { logServerError, logServerWarn } from "@/lib/logger";
 import { canCreateCheckout } from "@/lib/payment-security";
@@ -103,8 +103,8 @@ export async function prepareContributionAction(
           }
         }
       ],
-      success_url: `${getBaseUrl()}${localizeRequestPath(`/p/${parsed.data.share_token}/success`)}?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${getBaseUrl()}${localizeRequestPath(`/p/${parsed.data.share_token}/cancel`)}`,
+      success_url: `${getRequestBaseUrl()}${localizeRequestPath(`/p/${parsed.data.share_token}/success`)}?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${getRequestBaseUrl()}${localizeRequestPath(`/p/${parsed.data.share_token}/cancel`)}`,
       metadata: {
         pot_id: pot.id,
         share_token: parsed.data.share_token,

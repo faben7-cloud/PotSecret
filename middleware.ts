@@ -16,7 +16,8 @@ export function middleware(request: NextRequest) {
 
   if (!isApplicationRoute) return NextResponse.next();
 
-  const destination = request.nextUrl.clone();
+  // NextURL normalizes loopback hosts; a routing rewrite must preserve the origin.
+  const destination = new URL(request.url);
   destination.pathname = pathname;
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-potsecret-locale", locale);

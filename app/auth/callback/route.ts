@@ -2,7 +2,7 @@ import { localizeRequestPath } from "@/lib/i18n-server";
 import { normalizeInternalPath } from "@/lib/security";
 ﻿import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { getBaseUrl } from "@/lib/env";
+import { getRequestBaseUrl } from "@/lib/request-url";
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
@@ -15,5 +15,5 @@ export async function GET(request: Request) {
     await supabase.auth.exchangeCodeForSession(code);
   }
 
-  return NextResponse.redirect(`${getBaseUrl()}${next}`);
+  return NextResponse.redirect(`${getRequestBaseUrl(request)}${next}`);
 }
