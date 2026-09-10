@@ -17,7 +17,7 @@ export default async function LoginPage({
   const error = params?.error;
   const session = await getCurrentSession();
 
-  if (session) {
+  if (session && !error) {
     redirect(next);
   }
 

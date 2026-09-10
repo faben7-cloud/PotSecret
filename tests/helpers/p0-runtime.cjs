@@ -34,11 +34,11 @@ function loadSource(file, mocks = {}, globals = {}) {
       if (['stripe', 'zod', 'react/jsx-runtime', 'clsx'].includes(name)) return require(name);
       if (/^@\/locales\/(fr|en|es|it|de)\.json$/.test(name)) return JSON.parse(fs.readFileSync(path.join(root, name.slice(2)), 'utf8'));
       if (['@/lib/payment-security', '@/lib/security', '@/lib/payouts', '@/lib/copy',
-        '@/lib/getCopy', '@/lib/utils', '@/lib/i18n', '@/lib/i18n-server', '@/lib/auth', '@/lib/request-url', '@/lib/env'].includes(name)) return load(name.slice(2));
+        '@/lib/getCopy', '@/lib/utils', '@/lib/i18n', '@/lib/i18n-server', '@/lib/auth', '@/lib/request-url', '@/lib/env', '@/lib/logger'].includes(name)) return load(name.slice(2));
       throw new Error(`Unmocked dependency: ${name} in ${relative}`);
     };
     const context = { exports: mod.exports, module: mod, require: requireLocal,
-      process: { env: {} }, Request, Response, FormData, URL, Date, crypto: globalThis.crypto, console,
+      process: { env: {} }, Request, Response, FormData, URL, URLSearchParams, Date, crypto: globalThis.crypto, console,
       ...globals };
     vm.runInNewContext(output, context, { filename });
     return mod.exports;

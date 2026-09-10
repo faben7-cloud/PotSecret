@@ -29,7 +29,7 @@ function clientState() {
   const client = { auth: {
     getUser: async () => ({ data: { user: state.loggedIn ? { id: 'owner', email: 'local@example.invalid' } : null }, error: null }),
     getSession: async () => ({ data: { session: state.loggedIn ? { user: { id: 'owner' } } : null }, error: null }),
-    exchangeCodeForSession: async code => { state.exchanged.push(code); state.loggedIn = true; return { error: null }; },
+    exchangeCodeForSession: async code => { state.exchanged.push(code); state.loggedIn = true; return { data: { session: { user: { id: 'owner' } } }, error: null }; },
     signOut: async () => { state.loggedIn = false; state.signedOut++; return { error: null }; },
   } };
   return { state, client };
@@ -179,9 +179,9 @@ for (const next of ['https://external.invalid', '//external.invalid', '/\\extern
   test('callback keeps open-redirect protection for ' + JSON.stringify(next), async () => {
     const get = loadSource('app/auth/callback/route.ts', {
       ...context('/en/auth/callback'),
-      '@/lib/supabase/server': { createSupabaseServerClient: async () => ({ auth: { exchangeCodeForSession() { throw Error('Unexpected'); } } }) },
+      '@/lib/supabase/server': { createSupabaseServerClient: async () => ({ auth: { exchangeCodeForSession: async () => ({ data: { session: {} }, error: null }) } }) },
     }).GET;
-    const response = await get(new Request(origin + '/en/auth/callback?next=' + encodeURIComponent(next)));
+    const response = await get(new Request(origin + '/en/auth/callback?code=local-code&next=' + encodeURIComponent(next)));
     assert.equal(response.headers.get('location'), origin + '/en/dashboard');
   });
 }

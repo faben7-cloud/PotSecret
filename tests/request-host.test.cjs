@@ -30,7 +30,7 @@ for (const locale of locales) {
         exchangeCodeForSession: async code => {
           exchanges.push(code);
           options.cookies.set('sb-local-auth-token', 'local-session-only', { path: '/', sameSite: 'lax' });
-          return { error: null };
+          return { data: { session: { user: { id: 'local-user' } } }, error: null };
         },
         getUser: async () => ({ data: { user: options.cookies.get('sb-local-auth-token') ? { id: 'local-user' } : null }, error: null }),
       } }) },
@@ -49,7 +49,7 @@ for (const locale of locales) {
     browserHost = target.host;
     const user = await loadSource('lib/auth.ts', mocks, globals).requireUser('/dashboard');
     assert.equal(user.id, 'local-user', 'Session remains available on the redirected host');
-    const defaultResponse = await callback(new Request(origin + '/' + locale + '/auth/callback', { headers }));
+    const defaultResponse = await callback(new Request(origin + '/' + locale + '/auth/callback?code=local-code', { headers }));
     assert.equal(defaultResponse.headers.get('location'), origin + '/' + locale + '/dashboard');
     assert.equal(loadSource('lib/env.ts', {}, globals).getBaseUrl(), 'https://technical-deployment.example', 'Reproduce the mismatched configured deployment domain');
   });
@@ -87,9 +87,9 @@ for (const next of ['https://evil.example', '//evil.example', '/\\evil.example',
   test('malicious next stays on branch alias: ' + JSON.stringify(next), async () => {
     const { headers, mocks, globals } = fixture();
     const callback = loadSource('app/auth/callback/route.ts', { ...mocks,
-      '@/lib/supabase/server': { createSupabaseServerClient: async () => ({ auth: {} }) },
+      '@/lib/supabase/server': { createSupabaseServerClient: async () => ({ auth: { exchangeCodeForSession: async () => ({ data: { session: {} }, error: null }) } }) },
     }, globals).GET;
-    const response = await callback(new Request(origin + '/fr/auth/callback?next=' + encodeURIComponent(next) + '&origin=https://evil.example', { headers }));
+    const response = await callback(new Request(origin + '/fr/auth/callback?code=local-code&next=' + encodeURIComponent(next) + '&origin=https://evil.example', { headers }));
     assert.equal(response.headers.get('location'), origin + '/fr/dashboard');
   });
 }
@@ -97,9 +97,9 @@ test('legacy callback without locale keeps its request origin and defaults to Fr
   const { mocks, globals } = fixture();
   mocks['next/headers'].headers = () => new Headers();
   const callback = loadSource('app/auth/callback/route.ts', { ...mocks,
-    '@/lib/supabase/server': { createSupabaseServerClient: async () => ({ auth: {} }) },
+    '@/lib/supabase/server': { createSupabaseServerClient: async () => ({ auth: { exchangeCodeForSession: async () => ({ data: { session: {} }, error: null }) } }) },
   }, globals).GET;
-  assert.equal((await callback(new Request(origin + '/auth/callback'))).headers.get('location'), origin + '/fr/dashboard');
+  assert.equal((await callback(new Request(origin + '/auth/callback?code=local-code'))).headers.get('location'), origin + '/fr/dashboard');
 });
 test('Vercel request Host preserves custom aliases and ignores forwarded/client origin headers', () => {
   const { headers, mocks, globals } = fixture();
